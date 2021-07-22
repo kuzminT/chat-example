@@ -1,6 +1,7 @@
 package main
 
 import (
+	. "chat-example/pkg"
 	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -8,11 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"html/template"
+	"log"
+	"strings"
 	//"go.mongodb.org/mongo-driver/mongo/readpref"
 	"net/http"
 	"time"
-	//"go.mongodb.org/mongo-driver/mongo/readpref"
-	"log"
 )
 
 var upgrader = websocket.Upgrader{
@@ -22,7 +24,7 @@ var upgrader = websocket.Upgrader{
 
 const ConnectionUrl string = "mongodb://admin:test@localhost:27017"
 
-func getDbConnect () (*mongo.Database, *mongo.Client, context.Context) {
+func getDbConnect() (*mongo.Database, *mongo.Client, context.Context) {
 	dbClient, err := mongo.NewClient(options.Client().ApplyURI(ConnectionUrl))
 	if err != nil {
 		log.Fatal(err)
@@ -32,18 +34,12 @@ func getDbConnect () (*mongo.Database, *mongo.Client, context.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//databases, err := dbClient.ListDatabaseNames(ctx, bson.M{})
-	//if err != nil {
-	//	log.Fatal(err, 1)
-	//}
-	//fmt.Println(databases)
 	//if err := dbClient.Ping(ctx, readpref.Primary()); err != nil {
 	//	log.Fatalf("Connection with db is absent: %s", err)
 	//	return nil
 	//}
 	return dbClient.Database("chat"), dbClient, ctx
 }
-
 
 func main() {
 
@@ -65,25 +61,30 @@ func main() {
 
 			// Print the message to the console
 			fmt.Printf("%s sent: %s\n", wsConn.RemoteAddr(), string(msg))
+			msgClean := strings.TrimSpace(string(msg))
+			if len(msgClean) > 0 {
 
-			db, dbClient, ctx := getDbConnect()
-			defer dbClient.Disconnect(ctx)
-			coll := db.Collection("messages")
-			message :=  Message{
-				Text: string(msg),
-				CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
-			}
-			insertResult, err := coll.InsertOne(ctx, message)
+				db, dbClient, ctx := getDbConnect()
+				defer dbClient.Disconnect(ctx)
+				coll := db.Collection("messages")
+				message := Message{
+					Text:      string(msg),
+					CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
+				}
+				insertResult, err := coll.InsertOne(ctx, message)
 
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(insertResult.InsertedID)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println(insertResult.InsertedID)
 
-			// Write message back to browser
-			if err = wsConn.WriteMessage(msgType, msg); err != nil {
-				log.Println(err)
-				return
+				// Write message back to browser
+				if err = wsConn.WriteMessage(msgType, msg); err != nil {
+					log.Println(err)
+					return
+				}
+			} else {
+				log.Println("Send empty string!")
 			}
 		}
 	})
@@ -100,8 +101,16 @@ func main() {
 		if err = cursor.All(ctx, &messages); err != nil {
 			panic(err)
 		}
-		fmt.Printf("Messages: %s", messages)
-		http.ServeFile(w, r, "websockets.html")
+
+		tmpl := template.Must(template.ParseFiles("websockets.html"))
+
+		type PageData struct {
+			PageTitle string
+			Messages  []Message
+		}
+
+		tmpl.Execute(w, PageData{Messages: messages})
+		//http.ServeFile(w, r, "websockets.html")
 	})
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {

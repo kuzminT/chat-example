@@ -1,18 +1,25 @@
-<!-- websockets.html -->
+<html lang="rus">
+<head></head>
+<body>
 <input id="input" type="text" />
 <button onclick="send()">Send</button>
-<pre id="output"></pre>
+<pre id="output">
+    {{range .Messages}}
+        <div>Server: {{.Text}}</div>
+    {{end}}
+</pre>
 <script>
-    var input = document.getElementById("input");
-    var output = document.getElementById("output");
-    var socket = new WebSocket("ws://localhost:8080/messages");
+    const input = document.getElementById("input");
+    const output = document.getElementById("output");
+    const socket = new WebSocket("ws://localhost:8080/messages");
 
-    socket.onopen = function () {
-        output.innerHTML += "Status: Connected\n";
+    socket.onopen = function (e) {
+        console.log(e)
+        output.innerHTML += "<div>Status: Connected\n</div>";
     };
 
     socket.onmessage = function (e) {
-        output.innerHTML += "Server: " + e.data + "\n";
+        output.innerHTML += "<div>Server: " + e.data + "\n</div>";
     };
 
     function send() {
@@ -20,3 +27,5 @@
         input.value = "";
     }
 </script>
+</body>
+</html>
