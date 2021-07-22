@@ -70,6 +70,24 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+
+		fmt.Println(c.send)
+
+		msgClean := strings.TrimSpace(string(message))
+		db, dbClient, ctx := repository.GetDbConnect()
+		defer dbClient.Disconnect(ctx)
+		coll := db.Collection("messages")
+		messageStruct := Message{
+			Text:      msgClean,
+			CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
+		}
+		insertResult, err := coll.InsertOne(ctx, messageStruct)
+
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(insertResult.InsertedID)
+
 		c.hub.broadcast <- message
 	}
 }
@@ -103,23 +121,6 @@ func (c *Client) writePump() {
 				return
 			}
 			_, _ = w.Write(message)
-
-			fmt.Println(c.send)
-
-			msgClean := strings.TrimSpace(string(message))
-			db, dbClient, ctx := repository.GetDbConnect()
-			defer dbClient.Disconnect(ctx)
-			coll := db.Collection("messages")
-			messageStruct := Message{
-				Text:      msgClean,
-				CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
-			}
-			insertResult, err := coll.InsertOne(ctx, messageStruct)
-
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(insertResult.InsertedID)
 
 			// Add queued chat messages to the current websocket message.
 			n := len(c.send)
