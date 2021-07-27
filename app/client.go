@@ -74,6 +74,11 @@ func (c *Client) readPump() {
 		fmt.Println(c.send)
 
 		msgClean := strings.TrimSpace(string(message))
+		if len(msgClean) == 0 {
+			log.Println("Error! Empty message!")
+			continue
+		}
+
 		db, dbClient, ctx := repository.GetDbConnect()
 		defer dbClient.Disconnect(ctx)
 		coll := db.Collection("messages")
