@@ -104,8 +104,6 @@ func (c *Client) writePump() {
 		_ = c.conn.Close()
 	}()
 
-
-
 	for {
 		select {
 		case message, ok := <-c.send:
