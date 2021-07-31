@@ -4,9 +4,12 @@ import (
 	. "chat-example/app"
 	"chat-example/pkg/repository"
 	"context"
-	"go.mongodb.org/mongo-driver/bson"
 	"html/template"
+	"log"
 	"net/http"
+	"os"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 //var upgrader = websocket.Upgrader{
@@ -69,10 +72,10 @@ func GetMainPage(w http.ResponseWriter, r *http.Request) {
 	var messages []Message
 	cursor, err := msgCollection.Find(context.Background(), bson.D{})
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	if err = cursor.All(ctx, &messages); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer cursor.Close(context.Background())
 
@@ -81,8 +84,9 @@ func GetMainPage(w http.ResponseWriter, r *http.Request) {
 	type PageData struct {
 		PageTitle string
 		Messages  []Message
+		Port      string
 	}
 
-	tmpl.Execute(w, PageData{Messages: messages})
+	tmpl.Execute(w, PageData{Messages: messages, Port: os.Getenv("APP_PORT")})
 	//http.ServeFile(w, r, "websockets.html")
 }
