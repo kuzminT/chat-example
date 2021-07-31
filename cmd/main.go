@@ -1,8 +1,8 @@
 package main
 
 import (
-	. "chat-example/pkg/handler"
 	. "chat-example/app"
+	. "chat-example/pkg/handler"
 	"log"
 	"net/http"
 )
@@ -16,7 +16,7 @@ func main() {
 
 	http.HandleFunc("/", GetMainPage)
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8090", nil); err != nil {
 		log.Fatal(err)
 	}
 }

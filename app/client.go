@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"chat-example/pkg/repository"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/gorilla/websocket"
 )

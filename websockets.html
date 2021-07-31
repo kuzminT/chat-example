@@ -12,7 +12,7 @@
 <script>
     const input = document.getElementById("input");
     const output = document.getElementById("output");
-    const socket = new WebSocket("ws://localhost:8080/messages");
+    const socket = new WebSocket("ws://localhost:8090/messages");
 
     socket.onopen = function (e) {
         console.log(e)
